@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Service
+metadata:
+  name: order
+spec:
+  serviceName: db-mssql
+  replicas: 1
+  selector:
+    matchLabels:
+      app:order
+  updateStrategy:
+    type: OnDelete
+  template:
+    metadata:
+      labels:
+        app: order
+        db: mssql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: sql2019
+        image: lauxy1/orderapi
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "2Gi"
+          limits:
+            memory: "3Gi"
+        ports:
+        - containerPort: 80
+        - name: dbport
+          containerPort: 1433
+        env:
+        - name: MSSQL_HOST
+          value: "db-mssql"
+        - name: MSSQL_PORT
+          value: "1433"
+        - name: MSSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mssql
+              key: user
+        - name: MSSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mssql
+              key: user
+        - name: MSSQL_DATABASE
+          value: "Orders"
+          
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order
+spec:
+  selector:
+    app: db
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+  type: NodePort

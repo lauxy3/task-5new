@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cartapiprobes
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cartapiprobes
+  template:
+    metadata:
+      labels:
+        app: cartapiprobes
+    spec:
+     containers:
+      - name: cartapiprobes
+        image: lauxy1/cartapiprobes
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/liveness
+            port: 80
+          initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health/readiness
+            port: 80
+          initialDelaySeconds: 5
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cartservice
+spec:
+  selector:
+    app: cartapiprobes
+  ports:
+  - port: 80
+    targetPort: 80
